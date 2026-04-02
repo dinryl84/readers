@@ -42,6 +42,7 @@ export default function CVCScreen() {
       }
     }
     setSelectedFamily(family);
+  } // ✅ FIX: closing brace was missing here
 
   function openActivity(act) {
     setActivity(act);

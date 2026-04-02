@@ -63,6 +63,7 @@ export default function SyllablesScreen() {
       }
     }
     setSelected(family);
+  } // ✅ FIX: closing brace was missing here
 
   function resetAnims() {
     leftAnim.setValue(-80);
@@ -169,7 +170,7 @@ export default function SyllablesScreen() {
           {!merged ? (
             <View style={styles.tilesRow}>
 
-              {/* Consonant tile — Capital B, says "buh" */}
+              {/* Consonant tile */}
               <TouchableOpacity
                 onPress={() => Speech.speak(
                   CONSONANT_SOUNDS[selected.consonant] || selected.consonant,
@@ -187,7 +188,7 @@ export default function SyllablesScreen() {
 
               <Text style={styles.plusText}>+</Text>
 
-              {/* Vowel tile — lowercase a, says "aah" */}
+              {/* Vowel tile */}
               <TouchableOpacity
                 onPress={() => Speech.speak(
                   VOWEL_SOUNDS[vowel] || vowel,
@@ -205,7 +206,7 @@ export default function SyllablesScreen() {
 
             </View>
           ) : (
-            // Merged tile — shows "Ba", says "ba"
+            // Merged tile
             <TouchableOpacity
               onPress={() => Speech.speak(syllable, {
                 rate: 0.6, pitch: 1.3, language: 'en-US'

@@ -31,6 +31,7 @@ export default function RhymesScreen() {
       }
     }
     setSelected(rhyme);
+  } // ✅ FIX: closing brace was missing here
 
   function showZoom(word) {
     setZoomWord(word);
