@@ -2,7 +2,8 @@ import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, Animated
 } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTS, SHADOWS } from '../../constants/theme';
@@ -18,9 +19,8 @@ export default function ProgressScreen() {
   const progressAnim = useRef(new Animated.Value(0)).current;
   const bearAnim = useRef(new Animated.Value(0)).current;
 
+  // Bear bounce — only needs to run once on mount
   useEffect(() => {
-    loadProgress();
-    // Bear bounce
     Animated.loop(
       Animated.sequence([
         Animated.timing(bearAnim, { toValue: -10, duration: 500, useNativeDriver: true }),
@@ -28,6 +28,13 @@ export default function ProgressScreen() {
       ])
     ).start();
   }, []);
+
+  // ✅ FIX: useFocusEffect reloads progress every time the tab is visited
+  useFocusEffect(
+    useCallback(() => {
+      loadProgress();
+    }, [])
+  );
 
   async function loadProgress() {
     try {
@@ -49,7 +56,8 @@ export default function ProgressScreen() {
       setCompletedSyllables(syllables);
       setCompletedWords(words);
 
-      // Animate progress bar
+      // Animate progress bar — reset first so it re-animates on each visit
+      progressAnim.setValue(0);
       const pct = letters.length / 26;
       Animated.timing(progressAnim, {
         toValue: pct, duration: 1000, useNativeDriver: false
