@@ -6,6 +6,8 @@ import { useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { COLORS, FONTS, SHADOWS, Storage } from '../../constants/theme';
+import { isPaidUser } from '../../constants/subscription';
+import { router } from 'expo-router';
 
 const SYLLABLE_FAMILIES = [
   { consonant: 'B', color: '#FF6B8A', free: true },
@@ -52,13 +54,15 @@ export default function SyllablesScreen() {
   const mergedScale = useRef(new Animated.Value(0)).current;
   const celebAnim = useRef(new Animated.Value(0)).current;
 
-  function openFamily(family) {
-    if (!family.free) return;
+  async function openFamily(family) {
+    if (!family.free) {
+      const paid = await isPaidUser();
+      if (!paid) {
+        router.push('/paywall');
+        return;
+      }
+    }
     setSelected(family);
-    setVowelIndex(0);
-    setMerged(false);
-    resetAnims();
-  }
 
   function resetAnims() {
     leftAnim.setValue(-80);

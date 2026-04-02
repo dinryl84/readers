@@ -68,8 +68,13 @@ export default function Layout() {
           ),
         }}
       />
+
+      {/* Hidden routes — no tab bar icon */}
       <Tabs.Screen name="cvc/index" options={{ href: null }} />
       <Tabs.Screen name="words/index" options={{ href: null }} />
+      {/* ✅ FIX: Register trace route so it doesn't crash */}
+      <Tabs.Screen name="trace/index" options={{ href: null }} />
+      <Tabs.Screen name="paywall/index" options={{ href: null }} />
     </Tabs>
   );
 }

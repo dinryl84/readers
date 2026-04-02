@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { COLORS, FONTS, SHADOWS, Storage } from '../../constants/theme';
 import { RHYMES } from '../../constants/data';
+import { isPaidUser } from '../../constants/subscription';
+import { router } from 'expo-router';
 
 export default function RhymesScreen() {
   const insets = useSafeAreaInsets();
@@ -20,17 +22,15 @@ export default function RhymesScreen() {
   const celebAnim = useRef(new Animated.Value(0)).current;
   const wordScaleAnim = useRef(new Animated.Value(1)).current;
 
-  function openRhyme(rhyme) {
-    if (!rhyme.free) return;
+  async function openRhyme(rhyme) {
+    if (!rhyme.free) {
+      const paid = await isPaidUser();
+      if (!paid) {
+        router.push('/paywall');
+        return;
+      }
+    }
     setSelected(rhyme);
-    setActiveLine(-1);
-    setActiveWord(-1);
-    setActiveLineWord(-1);
-    setIsReading(false);
-    setZoomWord('');
-    celebAnim.setValue(0);
-    zoomAnim.setValue(0);
-  }
 
   function showZoom(word) {
     setZoomWord(word);

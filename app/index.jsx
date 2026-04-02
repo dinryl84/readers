@@ -1,7 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
-import { useEffect, useRef } from 'react';
-import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, SHADOWS, FONTS } from '../constants/theme';
 
 const MODULES = [
@@ -17,19 +19,46 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const bearAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [stars, setStars] = useState(0);
+  const [isPaid, setIsPaid] = useState(false);
 
   useEffect(() => {
-    // Bear bounce animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(bearAnim, { toValue: -12, duration: 600, useNativeDriver: true }),
         Animated.timing(bearAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
       ])
     ).start();
-
-    // Fade in
     Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
   }, []);
+
+  // Reload stars every time home screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [])
+  );
+
+  async function loadStats() {
+    try {
+      const s = await AsyncStorage.getItem('rb_stars');
+      const plan = await AsyncStorage.getItem('rb_plan');
+      const expiry = await AsyncStorage.getItem('rb_expiry');
+
+      setStars(s ? parseInt(s) : 0);
+
+      if (plan === 'lifetime') {
+        setIsPaid(true);
+      } else if (plan === 'monthly' && expiry) {
+        const exp = new Date(expiry);
+        setIsPaid(exp > new Date());
+      } else {
+        setIsPaid(false);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -46,8 +75,23 @@ export default function HomeScreen() {
 
         {/* Stars Bar */}
         <Animated.View style={[styles.starsBar, { opacity: fadeAnim }]}>
-          <Text style={styles.starsText}>⭐ 0 Stars</Text>
-          <Text style={styles.starsLabel}>Keep learning to earn more!</Text>
+          <View style={styles.starsLeft}>
+            <Text style={styles.starsText}>⭐ {stars} Stars</Text>
+            <Text style={styles.starsLabel}>
+              {isPaid ? '🏆 Full Access Unlocked!' : 'Keep learning to earn more!'}
+            </Text>
+          </View>
+          {!isPaid && (
+            <TouchableOpacity
+              style={styles.unlockBtn}
+              onPress={() => router.push('/paywall')}
+            >
+              <Text style={styles.unlockBtnText}>🔓 Unlock</Text>
+            </TouchableOpacity>
+          )}
+          {isPaid && (
+            <Text style={styles.paidBadge}>✅</Text>
+          )}
         </Animated.View>
 
         {/* Module Grid */}
@@ -109,9 +153,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 24,
     ...SHADOWS.small,
+  },
+  starsLeft: {
+    flex: 1,
   },
   starsText: {
     fontSize: FONTS.sizes.xl,
@@ -123,6 +172,21 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     fontWeight: '700',
     marginTop: 2,
+  },
+  unlockBtn: {
+    backgroundColor: COLORS.orange,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    ...SHADOWS.small,
+  },
+  unlockBtnText: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '900',
+    color: COLORS.white,
+  },
+  paidBadge: {
+    fontSize: 28,
   },
   sectionTitle: {
     fontSize: FONTS.sizes.lg,

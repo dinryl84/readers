@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { COLORS, FONTS, SHADOWS, Storage } from '../../constants/theme';
 import { LETTERS } from '../../constants/data';
+import { isPaidUser } from '../../constants/subscription';
 import { router } from 'expo-router';
 
 export default function ABCScreen() {
@@ -15,8 +16,14 @@ export default function ABCScreen() {
   const [learned, setLearned] = useState([]);
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
-  function openLetter(item) {
-    if (!item.free) return; // locked
+  async function openLetter(item) {
+    if (!item.free) {
+      const paid = await isPaidUser();
+      if (!paid) {
+        router.push('/paywall');
+        return;
+      }
+    }
     setSelected(item);
     scaleAnim.setValue(0);
     Animated.spring(scaleAnim, {
@@ -38,10 +45,10 @@ export default function ABCScreen() {
 
   function sayIt(item) {
     Speech.speak(`${item.letter} is for ${item.word}`, {
-  rate: 0.7,
-  pitch: 1.3,
-  language: 'en-US',
-});
+      rate: 0.7,
+      pitch: 1.3,
+      language: 'en-US',
+    });
   }
 
   return (
@@ -136,15 +143,15 @@ export default function ABCScreen() {
               </TouchableOpacity>
 
               {/* Trace It button */}
-<TouchableOpacity
-  style={[styles.traceBtn]}
-  onPress={() => {
-    closeLetter();
-    router.push('/trace');
-  }}
->
-  <Text style={styles.traceBtnText}>✍️ Trace It!</Text>
-</TouchableOpacity>
+              <TouchableOpacity
+                style={styles.traceBtn}
+                onPress={() => {
+                  closeLetter();
+                  router.push('/trace');
+                }}
+              >
+                <Text style={styles.traceBtnText}>✍️ Trace It!</Text>
+              </TouchableOpacity>
 
               {/* Star earned */}
               <Text style={styles.starEarned}>⭐ Great job!</Text>
@@ -287,22 +294,22 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: COLORS.white,
   },
+  traceBtn: {
+    marginTop: 10,
+    paddingHorizontal: 36,
+    paddingVertical: 14,
+    borderRadius: 50,
+    backgroundColor: COLORS.blue,
+    ...SHADOWS.small,
+  },
+  traceBtnText: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '900',
+    color: COLORS.white,
+  },
   starEarned: {
     fontSize: FONTS.sizes.lg,
     marginTop: 16,
     fontWeight: '800',
   },
-  traceBtn: {
-  marginTop: 10,
-  paddingHorizontal: 36,
-  paddingVertical: 14,
-  borderRadius: 50,
-  backgroundColor: COLORS.blue,
-  ...SHADOWS.small,
-},
-traceBtnText: {
-  fontSize: FONTS.sizes.lg,
-  fontWeight: '900',
-  color: COLORS.white,
-},
 });

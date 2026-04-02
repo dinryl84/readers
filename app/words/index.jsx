@@ -6,16 +6,8 @@ import { useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { COLORS, FONTS, SHADOWS, Storage } from '../../constants/theme';
-
-const CONSONANT_SOUNDS = {
-  B:'buh', C:'kuh', D:'duh', F:'fuh', G:'guh', H:'huh',
-  J:'juh', K:'kuh', L:'luh', M:'muh', N:'nuh', P:'puh',
-  R:'ruh', S:'suh', T:'tuh', V:'vuh', W:'wuh', Y:'yuh', Z:'zuh'
-};
-
-const VOWEL_SOUNDS = {
-  A:'at', E:'egg', I:'in', O:'on', U:'up'
-};
+import { isPaidUser } from '../../constants/subscription';
+import { router } from 'expo-router';
 
 const WORD_FAMILIES = [
   {
@@ -140,10 +132,15 @@ export default function WordsScreen() {
 
   const popAnim = useRef(new Animated.Value(0)).current;
   const celebAnim = useRef(new Animated.Value(0)).current;
-  const shakeAnim = useRef(new Animated.Value(0)).current;
 
-  function openFamily(family) {
-    if (!family.free) return;
+  async function openFamily(family) {
+    if (!family.free) {
+      const paid = await isPaidUser();
+      if (!paid) {
+        router.push('/paywall');
+        return;
+      }
+    }
     setSelectedFamily(family);
     setSelectedLevel(null);
     setWordIndex(0);
@@ -168,22 +165,13 @@ export default function WordsScreen() {
   function weSaidIt() {
     setShowImage(true);
     const word = selectedLevel.words[wordIndex];
-
-    // Pop animation
     popAnim.setValue(0);
     Animated.spring(popAnim, {
-      toValue: 1,
-      friction: 3,
-      tension: 80,
-      useNativeDriver: true,
+      toValue: 1, friction: 3, tension: 80, useNativeDriver: true,
     }).start();
-
-    // Celebrate
     Animated.timing(celebAnim, {
       toValue: 1, duration: 500, useNativeDriver: true
     }).start();
-
-    // Speak confirmation
     Speech.speak(`${word.word}! Great job!`, {
       rate: 0.7, pitch: 1.3, language: 'en-US'
     });
@@ -200,7 +188,6 @@ export default function WordsScreen() {
       celebAnim.setValue(0);
       speakWord(words[next]);
     } else {
-      // Finished all words in level
       Speech.speak('Amazing! You finished all the words! Great job!', {
         rate: 0.7, pitch: 1.3, language: 'en-US'
       });
@@ -218,8 +205,6 @@ export default function WordsScreen() {
 
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => {
             Speech.stop();
@@ -236,10 +221,7 @@ export default function WordsScreen() {
           </Text>
         </View>
 
-        {/* Word tiles */}
         <View style={styles.wordArea}>
-
-          {/* Syllable + ending tiles */}
           <View style={styles.tilesRow}>
             <TouchableOpacity
               onPress={() => Speech.speak(syllable, {
@@ -266,17 +248,14 @@ export default function WordsScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Equals sign */}
           <Text style={styles.equalsText}>=</Text>
 
-          {/* Full word */}
           <TouchableOpacity onPress={() => speakWord(word)}>
             <View style={[styles.fullWordTile, { backgroundColor: selectedFamily.color }]}>
               <Text style={styles.fullWordText}>{word.word}</Text>
             </View>
           </TouchableOpacity>
 
-          {/* Emoji pop-up */}
           {showImage && (
             <Animated.View style={[
               styles.emojiPop,
@@ -289,7 +268,6 @@ export default function WordsScreen() {
           )}
         </View>
 
-        {/* Buttons */}
         <View style={styles.btnCol}>
           {!showImage ? (
             <TouchableOpacity
@@ -308,7 +286,6 @@ export default function WordsScreen() {
               </Text>
             </TouchableOpacity>
           )}
-
           <TouchableOpacity
             style={styles.hearBtn}
             onPress={() => speakWord(word)}
@@ -316,7 +293,6 @@ export default function WordsScreen() {
             <Text style={styles.hearBtnText}>🔊 Hear It Again</Text>
           </TouchableOpacity>
         </View>
-
       </View>
     );
   }
@@ -400,214 +376,53 @@ export default function WordsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.yellow,
-  },
+  container: { flex: 1, backgroundColor: COLORS.yellow },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 14,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  backBtn: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '800',
-    color: COLORS.dark,
-  },
-  headerTitle: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: '900',
-    color: COLORS.dark,
-  },
-  headerSub: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '800',
-    color: COLORS.dark,
-    opacity: 0.6,
-  },
+  backBtn: { fontSize: FONTS.sizes.md, fontWeight: '800', color: COLORS.dark },
+  headerTitle: { fontSize: FONTS.sizes.xl, fontWeight: '900', color: COLORS.dark },
+  headerSub: { fontSize: FONTS.sizes.sm, fontWeight: '800', color: COLORS.dark, opacity: 0.6 },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    gap: 12,
-    justifyContent: 'space-between',
+    flexDirection: 'row', flexWrap: 'wrap',
+    paddingHorizontal: 16, paddingBottom: 40, gap: 12, justifyContent: 'space-between',
   },
   familyCard: {
-    width: '22%',
-    aspectRatio: 0.9,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 6,
+    width: '22%', borderRadius: 16, aspectRatio: 0.9,
+    alignItems: 'center', justifyContent: 'center', padding: 6,
   },
-  familyLetter: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: COLORS.white,
-  },
-  familyLetterLocked: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: COLORS.gray,
-  },
-  familySub: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: COLORS.white,
-    opacity: 0.9,
-  },
-  lockIcon: {
-    fontSize: 14,
-    marginTop: 4,
-  },
-  levelGrid: {
-    padding: 20,
-    gap: 16,
-  },
-  levelCard: {
-    borderRadius: 24,
-    padding: 20,
-    alignItems: 'center',
-  },
-  levelEmoji: {
-    fontSize: 32,
-    marginBottom: 4,
-  },
-  levelName: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: '900',
-    color: COLORS.white,
-  },
-  levelCount: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '700',
-    color: COLORS.white,
-    opacity: 0.85,
-    marginBottom: 10,
-  },
-  wordPreview: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  wordPreviewText: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '800',
-    color: COLORS.white,
-    opacity: 0.9,
-  },
-  wordArea: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  tilesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  syllableTile: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.medium,
-  },
-  syllableText: {
-    fontSize: 48,
-    fontWeight: '900',
-    color: COLORS.white,
-  },
-  plusText: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: COLORS.dark,
-    opacity: 0.5,
-  },
-  endingTile: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.medium,
-  },
-  endingText: {
-    fontSize: 48,
-    fontWeight: '900',
-    color: COLORS.white,
-  },
-  equalsText: {
-    fontSize: 40,
-    fontWeight: '900',
-    color: COLORS.dark,
-    opacity: 0.5,
-    marginVertical: 8,
-  },
-  fullWordTile: {
-    paddingHorizontal: 36,
-    paddingVertical: 18,
-    borderRadius: 24,
-    alignItems: 'center',
-    ...SHADOWS.medium,
-  },
-  fullWordText: {
-    fontSize: 52,
-    fontWeight: '900',
-    color: COLORS.white,
-  },
+  familyLetter: { fontSize: 24, fontWeight: '900', color: COLORS.white },
+  familyLetterLocked: { fontSize: 24, fontWeight: '900', color: COLORS.gray },
+  familySub: { fontSize: 9, fontWeight: '800', color: COLORS.white, opacity: 0.9 },
+  lockIcon: { fontSize: 14, marginTop: 4 },
+  levelGrid: { padding: 20, gap: 16 },
+  levelCard: { borderRadius: 24, padding: 20, alignItems: 'center' },
+  levelEmoji: { fontSize: 32, marginBottom: 4 },
+  levelName: { fontSize: FONTS.sizes.xl, fontWeight: '900', color: COLORS.white },
+  levelCount: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.white, opacity: 0.85, marginBottom: 10 },
+  wordPreview: { flexDirection: 'row', gap: 12 },
+  wordPreviewText: { fontSize: FONTS.sizes.md, fontWeight: '800', color: COLORS.white, opacity: 0.9 },
+  wordArea: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
+  tilesRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  syllableTile: { width: 100, height: 100, borderRadius: 20, alignItems: 'center', justifyContent: 'center', ...SHADOWS.medium },
+  syllableText: { fontSize: 48, fontWeight: '900', color: COLORS.white },
+  plusText: { fontSize: 36, fontWeight: '900', color: COLORS.dark, opacity: 0.5 },
+  endingTile: { width: 100, height: 100, borderRadius: 20, alignItems: 'center', justifyContent: 'center', ...SHADOWS.medium },
+  endingText: { fontSize: 48, fontWeight: '900', color: COLORS.white },
+  equalsText: { fontSize: 40, fontWeight: '900', color: COLORS.dark, opacity: 0.5, marginVertical: 8 },
+  fullWordTile: { paddingHorizontal: 36, paddingVertical: 18, borderRadius: 24, alignItems: 'center', ...SHADOWS.medium },
+  fullWordText: { fontSize: 52, fontWeight: '900', color: COLORS.white },
   emojiPop: {
-    marginTop: 20,
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: 24,
-    padding: 20,
-    width: '100%',
-    ...SHADOWS.medium,
+    marginTop: 20, alignItems: 'center', backgroundColor: COLORS.white,
+    borderRadius: 24, padding: 20, width: '100%', ...SHADOWS.medium,
   },
-  emojiText: {
-    fontSize: 64,
-  },
-  emojiLabel: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: '900',
-    color: COLORS.dark,
-    marginTop: 6,
-  },
-  starText: {
-    fontSize: FONTS.sizes.lg,
-    marginTop: 4,
-  },
-  btnCol: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    gap: 12,
-  },
-  saidBtn: {
-    paddingVertical: 18,
-    borderRadius: 50,
-    alignItems: 'center',
-    ...SHADOWS.medium,
-  },
-  saidBtnText: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: '900',
-    color: COLORS.white,
-  },
-  hearBtn: {
-    paddingVertical: 14,
-    borderRadius: 50,
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    ...SHADOWS.small,
-  },
-  hearBtnText: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '800',
-    color: COLORS.dark,
-  },
+  emojiText: { fontSize: 64 },
+  emojiLabel: { fontSize: FONTS.sizes.xl, fontWeight: '900', color: COLORS.dark, marginTop: 6 },
+  starText: { fontSize: FONTS.sizes.lg, marginTop: 4 },
+  btnCol: { paddingHorizontal: 20, paddingBottom: 24, gap: 12 },
+  saidBtn: { paddingVertical: 18, borderRadius: 50, alignItems: 'center', ...SHADOWS.medium },
+  saidBtnText: { fontSize: FONTS.sizes.lg, fontWeight: '900', color: COLORS.white },
+  hearBtn: { paddingVertical: 14, borderRadius: 50, alignItems: 'center', backgroundColor: COLORS.white, ...SHADOWS.small },
+  hearBtnText: { fontSize: FONTS.sizes.md, fontWeight: '800', color: COLORS.dark },
 });

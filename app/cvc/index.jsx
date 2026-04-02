@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { COLORS, FONTS, SHADOWS } from '../../constants/theme';
 import { CVC_FAMILIES } from '../../constants/data';
+import { isPaidUser } from '../../constants/subscription';
+import { router } from 'expo-router';
 
 export default function CVCScreen() {
   const insets = useSafeAreaInsets();
@@ -31,12 +33,15 @@ export default function CVCScreen() {
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const correctAnim = useRef(new Animated.Value(0)).current;
 
-  function openFamily(family) {
-    if (!family.free) return;
+  async function openFamily(family) {
+    if (!family.free) {
+      const paid = await isPaidUser();
+      if (!paid) {
+        router.push('/paywall');
+        return;
+      }
+    }
     setSelectedFamily(family);
-    setActivity(null);
-    setWordIndex(0);
-  }
 
   function openActivity(act) {
     setActivity(act);

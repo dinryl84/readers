@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated, PanResponder } from 'react-native';
 import { useRef, useState, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path, Circle, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg'; // ✅ FIX: removed unused SvgText import
 import * as Speech from 'expo-speech';
 import { router, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONTS, SHADOWS } from '../../constants/theme';
@@ -29,6 +29,10 @@ export default function TraceScreen() {
   const celebAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
+  // ✅ FIX: Use a ref to hold the current path so panResponder
+  // always reads the latest value without needing to be recreated
+  const currentPathRef = useRef('');
+
   const letter = LETTERS[currentIndex];
 
   // Guide dots — arranged in a 3x4 grid centered in canvas
@@ -46,22 +50,28 @@ export default function TraceScreen() {
     return result;
   }, []);
 
+  // ✅ FIX: panResponder created only ONCE with empty deps []
+  // Uses currentPathRef instead of currentPath state to avoid stale closure
   const panResponder = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (e) => {
       const { locationX, locationY } = e.nativeEvent;
-      setCurrentPath(`M${locationX.toFixed(1)},${locationY.toFixed(1)}`);
+      currentPathRef.current = `M${locationX.toFixed(1)},${locationY.toFixed(1)}`;
+      setCurrentPath(currentPathRef.current);
     },
     onPanResponderMove: (e) => {
       const { locationX, locationY } = e.nativeEvent;
-      setCurrentPath(prev => `${prev} L${locationX.toFixed(1)},${locationY.toFixed(1)}`);
+      currentPathRef.current += ` L${locationX.toFixed(1)},${locationY.toFixed(1)}`;
+      setCurrentPath(currentPathRef.current);
     },
     onPanResponderRelease: () => {
-      setPaths(prev => [...prev, currentPath]);
+      // ✅ Always reads fresh value from ref, never stale
+      setPaths(prev => [...prev, currentPathRef.current]);
+      currentPathRef.current = '';
       setCurrentPath('');
     },
-  }), [currentPath, done]);
+  }), []); // ✅ Empty deps — created only once, no re-creation on every stroke
 
   function completedTrace() {
     setDone(true);
@@ -80,6 +90,7 @@ export default function TraceScreen() {
   function clearTrace() {
     setPaths([]);
     setCurrentPath('');
+    currentPathRef.current = '';
     setDone(false);
     celebAnim.setValue(0);
     scaleAnim.setValue(1);
@@ -90,10 +101,22 @@ export default function TraceScreen() {
     setCurrentIndex(index);
     setPaths([]);
     setCurrentPath('');
+    currentPathRef.current = '';
     setDone(false);
     celebAnim.setValue(0);
     scaleAnim.setValue(1);
     Speech.stop();
+  }
+
+  // ✅ FIX: Next button on last letter now gives celebration feedback
+  function handleNext() {
+    if (currentIndex < LETTERS.length - 1) {
+      goToLetter(currentIndex + 1);
+    } else {
+      Speech.speak('You traced all the letters! Amazing job!', {
+        rate: 0.75, pitch: 1.3
+      });
+    }
   }
 
   return (
@@ -195,9 +218,11 @@ export default function TraceScreen() {
         {done && (
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: letter.color }]}
-            onPress={() => currentIndex < LETTERS.length - 1 && goToLetter(currentIndex + 1)}
+            onPress={handleNext} // ✅ FIX: uses handleNext with last letter feedback
           >
-            <Text style={styles.btnText}>Next ➡️</Text>
+            <Text style={styles.btnText}>
+              {currentIndex < LETTERS.length - 1 ? 'Next ➡️' : '🎉 Finish!'}
+            </Text>
           </TouchableOpacity>
         )}
 
