@@ -21,7 +21,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFE44D"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.basigsig.readerbears",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
@@ -30,6 +32,12 @@
     "plugins": [
       "expo-router",
       "react-native-iap"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "87c6d213-30c9-47ee-af2c-424e9cd8c606"
+      }
+    }
   }
 }
