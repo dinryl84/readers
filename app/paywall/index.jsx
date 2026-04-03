@@ -222,11 +222,12 @@ export default function PaywallScreen() {
         ))}
 
         {/* Activation code section */}
-        <View style={styles.codeSection}>
-          <Text style={styles.codeTitle}>🔑 Have an Activation Code?</Text>
-          <Text style={styles.codeDesc}>
-            Pay via GCash and we'll send you a code on Facebook!
-          </Text>
+        {/* Activation code section */}
+<View style={styles.codeSection}>
+  <Text style={styles.codeTitle}>🔑 Have an Activation Code?</Text>
+  <Text style={styles.codeDesc}>
+    Enter your activation code below to unlock full access.
+  </Text>
 
           <TextInput
             style={styles.codeInput}
@@ -250,17 +251,13 @@ export default function PaywallScreen() {
         </View>
 
         {/* Contact section */}
-        <View style={styles.contactSection}>
-          <Text style={styles.contactTitle}>💬 How to Get a Code</Text>
-          <Text style={styles.contactStep}>1. Choose Monthly (₱59) or Lifetime (₱149)</Text>
-          <Text style={styles.contactStep}>2. Send payment via GCash</Text>
-          <Text style={styles.contactStep}>3. Message us on Facebook</Text>
-          <Text style={styles.contactStep}>4. We'll send your code within minutes!</Text>
-
-          <TouchableOpacity style={[styles.fbBtn, { backgroundColor: '#1877F2' }]}>
-            <Text style={styles.fbBtnText}>💬 Message us on Facebook</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Contact section */}
+<View style={styles.contactSection}>
+  <Text style={styles.contactTitle}>💬 Coming Soon</Text>
+  <Text style={styles.contactStep}>
+    In-app purchase will be available soon. Stay tuned for updates!
+  </Text>
+</View>
 
       </ScrollView>
     </View>
