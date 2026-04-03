@@ -1,6 +1,6 @@
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, Animated
+  TouchableOpacity, Animated, Alert
 } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
@@ -69,21 +69,34 @@ export default function ProgressScreen() {
   }
 
   async function resetProgress() {
-    try {
-      await AsyncStorage.multiRemove([
-        'rb_stars', 'rb_letters', 'rb_rhymes',
-        'rb_syllables', 'rb_words'
-      ]);
-      setStars(0);
-      setLearnedLetters([]);
-      setLearnedRhymes([]);
-      setCompletedSyllables([]);
-      setCompletedWords(0);
-      progressAnim.setValue(0);
-    } catch (e) {
-      console.log('Error resetting:', e);
-    }
-  }
+  Alert.alert(
+    'Reset Progress?',
+    'This will erase all stars, letters, badges, and rhymes. Are you sure?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await AsyncStorage.multiRemove([
+              'rb_stars', 'rb_letters', 'rb_rhymes',
+              'rb_syllables', 'rb_words'
+            ]);
+            setStars(0);
+            setLearnedLetters([]);
+            setLearnedRhymes([]);
+            setCompletedSyllables([]);
+            setCompletedWords(0);
+            progressAnim.setValue(0);
+          } catch (e) {
+            console.log('Error resetting:', e);
+          }
+        }
+      }
+    ]
+  );
+}
 
   function isBadgeUnlocked(badge) {
     if (badge.type === 'letters') return learnedLetters.length >= badge.req;

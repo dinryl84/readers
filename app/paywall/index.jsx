@@ -44,7 +44,10 @@ export default function PaywallScreen() {
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [planType, setPlanType] = useState('free');
-  const scaleAnims = PLANS.map(() => useRef(new Animated.Value(1)).current);
+  const scaleAnim0 = useRef(new Animated.Value(1));
+const scaleAnim1 = useRef(new Animated.Value(1));
+const scaleAnim2 = useRef(new Animated.Value(1));
+const scaleAnims = [scaleAnim0.current, scaleAnim1.current, scaleAnim2.current];
   const bestAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {

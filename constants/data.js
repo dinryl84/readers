@@ -388,4 +388,6 @@ export const BADGES = [
   { id: 4, icon: '🏆', name: 'Alphabet Hero', desc: 'Learned all 26!', type: 'letters', req: 26 },
   { id: 5, icon: '🎵', name: 'Rhyme Time', desc: 'Read 1 rhyme', type: 'rhymes', req: 1 },
   { id: 6, icon: '🐻', name: 'ReaderBear!', desc: 'Read 3 rhymes', type: 'rhymes', req: 3 },
+  { id: 7, icon: '🔡', name: 'Syllable Star', desc: 'Complete 3 syllable families', type: 'syllables', req: 3 },
+{ id: 8, icon: '💬', name: 'Word Builder',  desc: 'Complete 5 words',             type: 'words',     req: 5 },
 ];
